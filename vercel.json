@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "swiggy-zomato-sentiment-cjm-dashboard",
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}

@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zomato Consumer Journey & ABSA Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .zomato-red { color: #E23744; }
+    .bg-zomato-red { background-color: #E23744; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+
+  <!-- Top Navigation Bar -->
+  <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <span class="text-2xl font-black text-red-600 tracking-tight">zomato</span>
+        <span class="text-xs bg-red-100 text-red-700 px-2.5 py-0.5 rounded-full font-bold">CJM & ABSA Analytics</span>
+      </div>
+      <div class="flex items-center space-x-4">
+        <span id="authBadge" class="text-xs font-semibold px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span> Connecting to API...
+        </span>
+        <a href="/docs" target="_blank" class="text-xs text-gray-500 hover:text-red-600 font-medium">
+          <i class="fa-solid fa-book-open mr-1"></i> Swagger Docs
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+    <!-- Left Column: Credentials Manager -->
+    <aside class="lg:col-span-1 space-y-6">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-gray-500 mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-key text-red-500"></i> Client Authentication
+        </h3>
+
+        <div class="space-y-3 text-xs">
+          <div>
+            <label class="block font-semibold text-gray-600 mb-1">X-API-Key</label>
+            <input type="password" id="inputApiKey" value="zmt_live_demo_key_9999" class="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-red-500 outline-none font-mono">
+          </div>
+          <div>
+            <label class="block font-semibold text-gray-600 mb-1">X-Client-ID</label>
+            <input type="text" id="inputClientId" value="zmt_client_demo_001" class="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-red-500 outline-none font-mono">
+          </div>
+          <div>
+            <label class="block font-semibold text-gray-600 mb-1">X-Client-Code</label>
+            <input type="text" id="inputClientCode" value="ZMT-BLR-JOURNEY-DEMO" class="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-red-500 outline-none font-mono">
+          </div>
+          <div>
+            <label class="block font-semibold text-gray-600 mb-1">User-Agent</label>
+            <input type="text" id="inputUserAgent" value="ZomatoWebClient/2.0 (Chrome; Windows)" class="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-red-500 outline-none font-mono">
+          </div>
+          
+          <div class="pt-2 flex gap-2">
+            <button onclick="testConnection()" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-3 rounded-lg text-xs transition">
+              Verify Credentials
+            </button>
+            <button onclick="registerNewKey()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-3 rounded-lg text-xs transition" title="Register New Key">
+              New Key
+            </button>
+          </div>
+        </div>
+
+        <div id="credentialsOutput" class="mt-4 p-3 bg-gray-50 rounded-lg text-[11px] font-mono text-gray-600 border hidden">
+        </div>
+      </div>
+
+      <!-- Quick Metrics Summary -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-gray-500">Market Overview (Bangalore)</h4>
+        <div class="flex justify-between items-center pb-2 border-b">
+          <span class="text-xs text-gray-500">Total Listings</span>
+          <span class="text-sm font-bold text-gray-800">51,717</span>
+        </div>
+        <div class="flex justify-between items-center pb-2 border-b">
+          <span class="text-xs text-gray-500">Unique Brands</span>
+          <span class="text-sm font-bold text-gray-800">8,792</span>
+        </div>
+        <div class="flex justify-between items-center pb-2 border-b">
+          <span class="text-xs text-gray-500">Online Delivery</span>
+          <span class="text-sm font-bold text-green-600">58.9%</span>
+        </div>
+        <div class="flex justify-between items-center pb-2 border-b">
+          <span class="text-xs text-gray-500">Table Booking</span>
+          <span class="text-sm font-bold text-blue-600">12.5%</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-xs text-gray-500">Avg Cost for Two</span>
+          <span class="text-sm font-bold text-gray-800">₹555</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right Column: Interactive CJM & ABSA Tabs -->
+    <section class="lg:col-span-3 space-y-6">
+
+      <!-- Navigation Tabs -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-2 flex space-x-2">
+        <button onclick="switchTab('tabFunnel')" id="btnTabFunnel" class="px-4 py-2 text-xs font-bold rounded-lg bg-red-50 text-red-600 flex items-center gap-2">
+          <i class="fa-solid fa-filter"></i> Funnel & CJM
+        </button>
+        <button onclick="switchTab('tabABSA')" id="btnTabABSA" class="px-4 py-2 text-xs font-semibold rounded-lg text-gray-600 hover:bg-gray-100 flex items-center gap-2">
+          <i class="fa-solid fa-utensils"></i> Dish ABSA Intelligence
+        </button>
+        <button onclick="switchTab('tabLiveAnalyzer')" id="btnTabLive" class="px-4 py-2 text-xs font-semibold rounded-lg text-gray-600 hover:bg-gray-100 flex items-center gap-2">
+          <i class="fa-solid fa-brain"></i> Live Review Model
+        </button>
+        <button onclick="switchTab('tabPersonas')" id="btnTabPersonas" class="px-4 py-2 text-xs font-semibold rounded-lg text-gray-600 hover:bg-gray-100 flex items-center gap-2">
+          <i class="fa-solid fa-users"></i> Personas
+        </button>
+        <button onclick="switchTab('tabSwiggyZomato')" id="btnTabSZ" class="px-4 py-2 text-xs font-semibold rounded-lg text-gray-600 hover:bg-gray-100 flex items-center gap-2">
+          <i class="fa-solid fa-scale-balanced"></i> Swiggy vs Zomato
+        </button>
+      </div>
+
+      <!-- TAB 1: FUNNEL -->
+      <div id="tabFunnel" class="space-y-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-base text-gray-800">Consumer Conversion Funnel (51,717 Bangalore Interactions)</h3>
+            <span class="text-xs text-gray-400">Stages 1 to 4 drop-off</span>
+          </div>
+          <div class="h-64">
+            <canvas id="funnelChart"></canvas>
+          </div>
+        </div>
+
+        <!-- 6 Stage Journey Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm border-t-4 border-t-red-500">
+            <span class="text-[10px] font-bold text-red-600 uppercase">Stage 1</span>
+            <h4 class="font-bold text-sm text-gray-800 mt-1">Discovery & Trigger</h4>
+            <p class="text-xs text-gray-500 mt-1">Locality search, craving trigger. Hubs: BTM, HSR, Koramangala. Top cuisine: North Indian (21K).</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm border-t-4 border-t-red-400">
+            <span class="text-[10px] font-bold text-red-500 uppercase">Stage 2</span>
+            <h4 class="font-bold text-sm text-gray-800 mt-1">Exploration & Filter</h4>
+            <p class="text-xs text-gray-500 mt-1">Filter by budget (<₹400: 35%, ₹400-800: 45%). Online order: 58.9%, Table booking: 12.5%.</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm border-t-4 border-t-red-300">
+            <span class="text-[10px] font-bold text-red-400 uppercase">Stage 3</span>
+            <h4 class="font-bold text-sm text-gray-800 mt-1">Trust & Evaluation</h4>
+            <p class="text-xs text-gray-500 mt-1">Compare ratings (Avg 3.70/5.0). 30.5% rated > 4.0. Dish liked signal present on 45.6% listings.</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm border-t-4 border-t-green-500">
+            <span class="text-[10px] font-bold text-green-600 uppercase">Stage 4</span>
+            <h4 class="font-bold text-sm text-gray-800 mt-1">Conversion & Checkout</h4>
+            <p class="text-xs text-gray-500 mt-1">19,652 buyers (38% conversion). Delivery ticket ~₹278/head; dine-out booking ~₹555/couple.</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm border-t-4 border-t-blue-500">
+            <span class="text-[10px] font-bold text-blue-600 uppercase">Stage 5</span>
+            <h4 class="font-bold text-sm text-gray-800 mt-1">Fulfillment Experience</h4>
+            <p class="text-xs text-gray-500 mt-1">Delivery packaging, food temp, wait time. Main churn trigger: late delivery & cold food.</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm border-t-4 border-t-purple-500">
+            <span class="text-[10px] font-bold text-purple-600 uppercase">Stage 6</span>
+            <h4 class="font-bold text-sm text-gray-800 mt-1">Retention & Advocacy</h4>
+            <p class="text-xs text-gray-500 mt-1">Net Sentiment: +68.35% (84.18% Positive). Reviews praise flavor & fast delivery.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: DISH ABSA -->
+      <div id="tabABSA" class="space-y-6 hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div>
+              <h3 class="font-bold text-base text-gray-800">Aspect-Based Sentiment by Dish Entity</h3>
+              <p class="text-xs text-gray-500">Comparing Taste, Portion, Value, and Freshness dimensions</p>
+            </div>
+            <select id="dishSelect" onchange="updateDishView()" class="px-3 py-2 border rounded-lg text-xs font-semibold focus:ring-1 focus:ring-red-500 outline-none bg-gray-50">
+              <option value="Biryani">Biryani (Chicken & Mutton)</option>
+              <option value="Pizza">Pizza (Wood-Fired & Thin Crust)</option>
+              <option value="Burgers">Burgers (Gourmet & Crispy)</option>
+              <option value="Pasta">Pasta (Alfredo & Arrabiata)</option>
+              <option value="Butter Chicken">Butter Chicken & Naan</option>
+              <option value="Waffles & Desserts">Waffles & Desserts</option>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+            <div class="h-64 flex justify-center">
+              <canvas id="dishRadarChart"></canvas>
+            </div>
+            <div class="space-y-4 text-xs">
+              <div class="p-3 bg-red-50 rounded-lg">
+                <span class="font-bold text-red-700">Positive Sentiment Share:</span>
+                <span id="dishPosPct" class="font-bold text-base text-red-600 ml-1">86.4%</span>
+                <p id="dishMentions" class="text-[11px] text-gray-500 mt-0.5">5,422 review mentions analyzed</p>
+              </div>
+
+              <div>
+                <h5 class="font-bold text-green-700 mb-1 flex items-center gap-1.5">
+                  <i class="fa-solid fa-circle-check"></i> Top Praise Drivers:
+                </h5>
+                <ul id="dishPosDrivers" class="list-disc list-inside text-gray-600 space-y-0.5 pl-1">
+                </ul>
+              </div>
+
+              <div>
+                <h5 class="font-bold text-red-700 mb-1 flex items-center gap-1.5">
+                  <i class="fa-solid fa-circle-xmark"></i> Top Churn Complaints:
+                </h5>
+                <ul id="dishNegDrivers" class="list-disc list-inside text-gray-600 space-y-0.5 pl-1">
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: LIVE ANALYZER -->
+      <div id="tabLiveAnalyzer" class="space-y-6 hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+          <div>
+            <h3 class="font-bold text-base text-gray-800">Live RoBERTa / BERT Aspect-Based Sentiment Classifier</h3>
+            <p class="text-xs text-gray-500">Test any natural language review to extract target dishes, aspect polarities, and confidence scores.</p>
+          </div>
+
+          <div>
+            <textarea id="liveReviewInput" rows="3" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:ring-1 focus:ring-red-500 font-sans" placeholder="Type or paste a customer review...">The chicken biryani had incredible aroma and succulent meat, but 420 rs was too overpriced and the portion was tiny!</textarea>
+          </div>
+
+          <button onclick="runLiveABSA()" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-lg text-xs transition flex items-center gap-2">
+            <i class="fa-solid fa-bolt"></i> Run ABSA Model
+          </button>
+
+          <div id="liveResultContainer" class="hidden pt-4 border-t border-gray-100 space-y-4">
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg text-xs">
+              <div>
+                <span class="text-gray-500">Target Dishes:</span>
+                <span id="detectedDishesBadge" class="font-bold text-red-600 ml-1">Biryani, Chicken Biryani</span>
+              </div>
+              <div>
+                <span class="text-gray-500">Model Confidence:</span>
+                <span id="modelConfBadge" class="font-bold text-gray-800 ml-1">93.7%</span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center" id="aspectCardsGrid">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: PERSONAS -->
+      <div id="tabPersonas" class="space-y-6 hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-2">
+            <div class="flex items-center gap-2 text-red-600 font-bold text-sm">
+              <i class="fa-solid fa-graduation-cap"></i> The Budget Delivery Explorer
+            </div>
+            <p class="text-xs text-gray-500">College students & early pros ordering weeknight dinners on a budget.</p>
+            <div class="text-xs space-y-1 pt-2">
+              <p><strong>Avg Budget:</strong> ₹250 | <strong>Channel:</strong> Delivery</p>
+              <p><strong>Fav Cuisines:</strong> Fast Food, Biryani, North Indian</p>
+              <p class="text-red-600"><strong>Critical Friction:</strong> Surge delivery fee or high minimum order</p>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-2">
+            <div class="flex items-center gap-2 text-red-600 font-bold text-sm">
+              <i class="fa-solid fa-champagne-glasses"></i> The Weekend Social Diner
+            </div>
+            <p class="text-xs text-gray-500">Young couples & groups booking tables for weekend dinners and cocktails.</p>
+            <div class="text-xs space-y-1 pt-2">
+              <p><strong>Avg Budget:</strong> ₹1,200 | <strong>Channel:</strong> Dine-out / Buffet</p>
+              <p><strong>Fav Cuisines:</strong> Continental, Finger Food, Italian</p>
+              <p class="text-red-600"><strong>Critical Friction:</strong> Lack of table reservation or crowded venue</p>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-2">
+            <div class="flex items-center gap-2 text-red-600 font-bold text-sm">
+              <i class="fa-solid fa-briefcase"></i> The Everyday Working Professional
+            </div>
+            <p class="text-xs text-gray-500">IT workers in tech parks (Whitefield, Koramangala) ordering daily lunches.</p>
+            <div class="text-xs space-y-1 pt-2">
+              <p><strong>Avg Budget:</strong> ₹350 | <strong>Channel:</strong> Delivery (Lunch)</p>
+              <p><strong>Fav Cuisines:</strong> South Indian, Thali, Healthy Food</p>
+              <p class="text-red-600"><strong>Critical Friction:</strong> Delayed lunch delivery or packaging leaks</p>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-2">
+            <div class="flex items-center gap-2 text-red-600 font-bold text-sm">
+              <i class="fa-solid fa-mug-hot"></i> The Aesthetic Cafe Hopper
+            </div>
+            <p class="text-xs text-gray-500">Creatives & remote workers seeking specialty coffee and work vibes.</p>
+            <div class="text-xs space-y-1 pt-2">
+              <p><strong>Avg Budget:</strong> ₹600 | <strong>Channel:</strong> Cafes / Desserts</p>
+              <p><strong>Fav Cuisines:</strong> Coffee, Bakery, Desserts</p>
+              <p class="text-red-600"><strong>Critical Friction:</strong> No seating, poor Wi-Fi, or no power outlets</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 5: SWIGGY VS ZOMATO KEYWORD SENTIMENT -->
+      <div id="tabSwiggyZomato" class="space-y-6 hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div>
+              <h3 class="font-bold text-base text-gray-800">Swiggy vs Zomato: Keyword Sentiment Analysis</h3>
+              <p class="text-xs text-gray-500">Comments specifically mentioning the words "swiggy" and "zomato" from uploaded dataset</p>
+            </div>
+            <span class="text-xs font-semibold px-3 py-1 bg-gray-100 rounded-lg text-gray-600">358 Comments Analyzed</span>
+          </div>
+
+          <!-- 3 Metric Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div class="p-4 rounded-xl bg-orange-50 border border-orange-200">
+              <span class="font-bold text-orange-600 uppercase text-[10px] tracking-wide">Mentioning "Swiggy"</span>
+              <h3 class="text-2xl font-black text-gray-800 my-1">224 <span class="text-xs font-normal text-gray-500">comments</span></h3>
+              <div class="space-y-0.5 pt-1 text-gray-600 font-medium">
+                <p>🔴 <strong>Negative:</strong> <span class="text-red-600 font-bold">74</span> (33.0%)</p>
+                <p>🟢 <strong>Positive:</strong> <span class="text-green-600 font-bold">29</span> (12.9%)</p>
+                <p>⚪ <strong>Neutral:</strong> 121 (54.0%)</p>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-red-50 border border-red-200">
+              <span class="font-bold text-red-600 uppercase text-[10px] tracking-wide">Mentioning "Zomato"</span>
+              <h3 class="text-2xl font-black text-gray-800 my-1">191 <span class="text-xs font-normal text-gray-500">comments</span></h3>
+              <div class="space-y-0.5 pt-1 text-gray-600 font-medium">
+                <p>🔴 <strong>Negative:</strong> <span class="text-red-600 font-bold">42</span> (22.0%)</p>
+                <p>🟢 <strong>Positive:</strong> <span class="text-green-600 font-bold">29</span> (15.2%)</p>
+                <p>⚪ <strong>Neutral:</strong> 120 (62.8%)</p>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-blue-50 border border-blue-200">
+              <span class="font-bold text-blue-700 uppercase text-[10px] tracking-wide">Mentioning BOTH Brands</span>
+              <h3 class="text-2xl font-black text-gray-800 my-1">60 <span class="text-xs font-normal text-gray-500">comments</span></h3>
+              <div class="space-y-0.5 pt-1 text-gray-600 font-medium">
+                <p>🔴 <strong>Negative:</strong> <span class="text-red-600 font-bold">15</span> (25.0%)</p>
+                <p>🟢 <strong>Positive:</strong> <span class="text-green-600 font-bold">11</span> (18.3%)</p>
+                <p>⚪ <strong>Neutral:</strong> 34 (56.7%)</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Comparison Bar Chart -->
+          <div class="h-64">
+            <canvas id="szComparisonChart"></canvas>
+          </div>
+
+          <!-- Interactive Comments List Filter -->
+          <div class="pt-4 border-t border-gray-100 space-y-3">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <h4 class="font-bold text-sm text-gray-800">Filtered Comment Explorer</h4>
+              <div class="flex gap-2 text-xs">
+                <select id="filterBrandSelect" onchange="renderSZComments()" class="px-2.5 py-1.5 border rounded-lg outline-none bg-gray-50">
+                  <option value="swiggy">Mentioning "Swiggy" (224)</option>
+                  <option value="zomato">Mentioning "Zomato" (191)</option>
+                  <option value="both">Mentioning Both (60)</option>
+                </select>
+                <select id="filterSentSelect" onchange="renderSZComments()" class="px-2.5 py-1.5 border rounded-lg outline-none bg-gray-50">
+                  <option value="all">All Sentiments</option>
+                  <option value="Negative">Negative Only</option>
+                  <option value="Positive">Positive Only</option>
+                  <option value="Neutral">Neutral Only</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="szCommentsList" class="space-y-2 max-h-96 overflow-y-auto text-xs pr-1">
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <script>
+    let dishDataCache = {};
+    let radarChartInstance = null;
+
+    function getHeaders() {
+      return {
+        "Content-Type": "application/json",
+        "X-API-Key": document.getElementById('inputApiKey').value.trim(),
+        "X-Client-ID": document.getElementById('inputClientId').value.trim(),
+        "X-Client-Code": document.getElementById('inputClientCode').value.trim(),
+        "User-Agent": document.getElementById('inputUserAgent').value.trim()
+      };
+    }
+
+    async function testConnection() {
+      const badge = document.getElementById('authBadge');
+      const out = document.getElementById('credentialsOutput');
+      badge.className = "text-xs font-semibold px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 flex items-center gap-1.5";
+      badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span> Verifying...';
+
+      try {
+        const res = await fetch("/api/v1/auth/me", { headers: getHeaders() });
+        if (res.ok) {
+          const data = await res.json();
+          badge.className = "text-xs font-semibold px-3 py-1 rounded-full bg-green-100 text-green-800 flex items-center gap-1.5";
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-green-500"></span> Verified: ${data.client_id}`;
+          out.classList.remove('hidden');
+          out.innerHTML = `<strong>Status:</strong> Active<br><strong>App:</strong> ${data.app_name}<br><strong>Client ID:</strong> ${data.client_id}<br><strong>Client Code:</strong> ${data.client_code}<br><strong>User-Agent:</strong> ${data.user_agent}`;
+        } else {
+          const err = await res.json();
+          badge.className = "text-xs font-semibold px-3 py-1 rounded-full bg-red-100 text-red-800 flex items-center gap-1.5";
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> Error ${res.status}`;
+          out.classList.remove('hidden');
+          out.innerHTML = `<span class="text-red-600">Authentication Failed:</span> ${err.detail || 'Invalid Credentials'}`;
+        }
+      } catch (e) {
+        badge.className = "text-xs font-semibold px-3 py-1 rounded-full bg-red-100 text-red-800 flex items-center gap-1.5";
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> Offline`;
+      }
+    }
+
+    async function registerNewKey() {
+      const appName = prompt("Enter Application Name:", "My Food Insights Client");
+      if (!appName) return;
+      const clientCode = prompt("Enter Custom Client Code (optional):", "ZMT-APP-" + Math.floor(Math.random() * 9000 + 1000));
+
+      try {
+        const res = await fetch("/api/v1/auth/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "User-Agent": document.getElementById('inputUserAgent').value.trim()
+          },
+          body: JSON.stringify({ app_name: appName, client_code: clientCode })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          document.getElementById('inputApiKey').value = data.api_key;
+          document.getElementById('inputClientId').value = data.client_id;
+          document.getElementById('inputClientCode').value = data.client_code;
+          alert("New Key Generated Successfully!\nClient ID: " + data.client_id + "\nAPI Key: " + data.api_key);
+          testConnection();
+        } else {
+          alert("Registration failed");
+        }
+      } catch (err) {
+        alert("Registration error: " + err);
+      }
+    }
+
+    function switchTab(tabId) {
+      ['tabFunnel', 'tabABSA', 'tabLiveAnalyzer', 'tabPersonas', 'tabSwiggyZomato'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+      });
+      ['btnTabFunnel', 'btnTabABSA', 'btnTabLive', 'btnTabPersonas', 'btnTabSZ'].forEach(id => {
+        const btn = document.getElementById(id);
+        btn.className = "px-4 py-2 text-xs font-semibold rounded-lg text-gray-600 hover:bg-gray-100 flex items-center gap-2";
+      });
+
+      document.getElementById(tabId).classList.remove('hidden');
+      if (tabId === 'tabFunnel') document.getElementById('btnTabFunnel').className = "px-4 py-2 text-xs font-bold rounded-lg bg-red-50 text-red-600 flex items-center gap-2";
+      if (tabId === 'tabABSA') {
+        document.getElementById('btnTabABSA').className = "px-4 py-2 text-xs font-bold rounded-lg bg-red-50 text-red-600 flex items-center gap-2";
+        loadDishData();
+      }
+      if (tabId === 'tabLiveAnalyzer') document.getElementById('btnTabLive').className = "px-4 py-2 text-xs font-bold rounded-lg bg-red-50 text-red-600 flex items-center gap-2";
+      if (tabId === 'tabPersonas') document.getElementById('btnTabPersonas').className = "px-4 py-2 text-xs font-bold rounded-lg bg-red-50 text-red-600 flex items-center gap-2";
+      if (tabId === 'tabSwiggyZomato') {
+        document.getElementById('btnTabSZ').className = "px-4 py-2 text-xs font-bold rounded-lg bg-red-50 text-red-600 flex items-center gap-2";
+        initSZComparisonChart();
+        renderSZComments();
+      }
+    }
+
+    // Chart.js Funnel Render
+    function initFunnelChart() {
+      const ctx = document.getElementById('funnelChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Stage 1: Discovery', 'Stage 2: Exploration', 'Stage 3: Evaluation', 'Stage 4: Conversion'],
+          datasets: [{
+            label: 'Active Consumer Volume Pool',
+            data: [51717, 42407, 29995, 19652],
+            backgroundColor: ['#E23744', '#F05A65', '#FA7D87', '#FFA6AD'],
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    async function loadDishData() {
+      try {
+        const res = await fetch("/api/v1/sentiment/dishes", { headers: getHeaders() });
+        if (res.ok) {
+          const json = await res.json();
+          dishDataCache = json.data.dishes;
+          updateDishView();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function updateDishView() {
+      const dishKey = document.getElementById('dishSelect').value;
+      const d = dishDataCache[dishKey];
+      if (!d) return;
+
+      document.getElementById('dishPosPct').innerText = d.overall_sentiment_positive_pct + '%';
+      document.getElementById('dishMentions').innerText = d.total_mentions_analyzed.toLocaleString() + ' review mentions analyzed';
+
+      const posList = document.getElementById('dishPosDrivers');
+      posList.innerHTML = d.top_positive_drivers.map(x => `<li>${x}</li>`).join('');
+
+      const negList = document.getElementById('dishNegDrivers');
+      negList.innerHTML = d.top_negative_drivers.map(x => `<li>${x}</li>`).join('');
+
+      const radarCtx = document.getElementById('dishRadarChart').getContext('2d');
+      const radarData = [
+        d.aspect_scores.taste_and_flavor,
+        d.aspect_scores.portion_quantity,
+        d.aspect_scores.value_for_money,
+        d.aspect_scores.freshness_and_packaging
+      ];
+
+      if (radarChartInstance) radarChartInstance.destroy();
+
+      radarChartInstance = new Chart(radarCtx, {
+        type: 'radar',
+        data: {
+          labels: ['Taste & Flavor', 'Portion Quantity', 'Value for Money', 'Freshness / Prep'],
+          datasets: [{
+            label: dishKey,
+            data: radarData,
+            borderColor: '#E23744',
+            backgroundColor: 'rgba(226, 55, 68, 0.2)',
+            pointBackgroundColor: '#E23744'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { r: { min: 0, max: 1.0, ticks: { stepSize: 0.2 } } }
+        }
+      });
+    }
+
+    async function runLiveABSA() {
+      const text = document.getElementById('liveReviewInput').value;
+      const btn = event.target;
+      btn.innerText = "Analyzing...";
+
+      try {
+        const res = await fetch("/api/v1/sentiment/absa/analyze", {
+          method: "POST",
+          headers: getHeaders(),
+          body: JSON.stringify({ text: text })
+        });
+        if (res.ok) {
+          const result = (await res.json()).data;
+          document.getElementById('liveResultContainer').classList.remove('hidden');
+          document.getElementById('detectedDishesBadge').innerText = result.detected_dishes.join(', ');
+          document.getElementById('modelConfBadge').innerText = (result.model_confidence * 100).toFixed(1) + '%';
+
+          const grid = document.getElementById('aspectCardsGrid');
+          const aspectLabels = {
+            taste: "Taste & Flavor",
+            portion: "Portion Size",
+            value: "Value / Price",
+            freshness_prep: "Freshness / Packaging"
+          };
+
+          grid.innerHTML = Object.keys(aspectLabels).map(key => {
+            const asp = result.aspect_breakdown[key];
+            const isPos = asp.aspect_polarity_score > 0;
+            const isNeg = asp.aspect_polarity_score < 0;
+            const colorClass = isPos ? 'text-green-600 bg-green-50 border-green-200' : (isNeg ? 'text-red-600 bg-red-50 border-red-200' : 'text-gray-500 bg-gray-50 border-gray-200');
+            return `
+              <div class="border rounded-lg p-3 ${colorClass}">
+                <p class="text-[11px] font-medium text-gray-500">${aspectLabels[key]}</p>
+                <p class="font-bold text-sm my-0.5">${asp.sentiment}</p>
+                <p class="text-[10px] font-mono">Score: ${asp.aspect_polarity_score > 0 ? '+' : ''}${asp.aspect_polarity_score.toFixed(2)}</p>
+              </div>
+            `;
+          }).join('');
+        }
+      } catch (err) {
+        alert("Analysis error: " + err);
+      } finally {
+        btn.innerHTML = '<i class="fa-solid fa-bolt mr-1"></i> Run ABSA Model';
+      }
+    }
+
+    let szChartInstance = null;
+    let szCommentsData = [];
+
+    async function loadSZData() {
+      try {
+        const res = await fetch("/api/v1/sentiment/swiggy-zomato", { headers: getHeaders() });
+        if (res.ok) {
+          const json = await res.json();
+          // Cache data
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function initSZComparisonChart() {
+      const ctx = document.getElementById('szComparisonChart');
+      if (!ctx) return;
+      if (szChartInstance) szChartInstance.destroy();
+
+      szChartInstance = new Chart(ctx.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: ['Mentioning "Swiggy" (224)', 'Mentioning "Zomato" (191)', 'Mentioning Both (60)'],
+          datasets: [
+            {
+              label: 'Negative Comments',
+              data: [74, 42, 15],
+              backgroundColor: '#E23744',
+              borderRadius: 5
+            },
+            {
+              label: 'Positive Comments',
+              data: [29, 29, 11],
+              backgroundColor: '#27AE60',
+              borderRadius: 5
+            },
+            {
+              label: 'Neutral Comments',
+              data: [121, 120, 34],
+              backgroundColor: '#95A5A6',
+              borderRadius: 5
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } },
+            title: { display: true, text: 'Number of Comments by Sentiment for Mentioned Keywords' }
+          },
+          scales: {
+            y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    const sampleSZComments = [
+      { text: "Exactly. You paid to Swiggy Instamart including their delivery, platform fee etc directly. There was absolutely no need to pay anything to the delivery guy.", brand: "swiggy", sent: "Negative" },
+      { text: "Swiggy is the biggest scam company out there just got sick from their food", brand: "swiggy", sent: "Negative" },
+      { text: "Swiggy Presents ‘Shreshtho Pujo’! Accept my invite and we both get ₹10 Free Cash. Join the celebration & win up to ₹100", brand: "swiggy", sent: "Positive" },
+      { text: "Swiggy app itself is utter shit. It has many bugs like this. And they don't even try to fix it. I find zomato app much better and advanced in terms of tech.", brand: "both", sent: "Negative" },
+      { text: "Use Zomato to find a dish which is low budget. Once you decide, use Swiggy to see dish ratings. I create carts on both apps and order the cheaper one.", brand: "both", sent: "Positive" },
+      { text: "I have stopped ordering from zomato", brand: "zomato", sent: "Negative" },
+      { text: "I use zomato atleast 5 times a week and i have never faced any such issues. Ring the bell and deliver properly.", brand: "zomato", sent: "Positive" },
+      { text: "Zomato gold doesn't auto-renew. I have been using Zomato gold since it started and renewing for just 1 Rs.", brand: "zomato", sent: "Positive" },
+      { text: "Zomato support to ab lagbhag dead hi hogaya hai try ways to reach to support", brand: "zomato", sent: "Negative" },
+      { text: "The same thing happened with me on Swiggy with Lasagna without cheese. Took revenge, placed COD order and uninstalled app.", brand: "swiggy", sent: "Negative" },
+      { text: "I find Zomato equally pathetic when it comes to cancellations. If food is late from their side they don’t allow cancellations.", brand: "both", sent: "Negative" },
+      { text: "Zomato just refunded my money and I slept without feeling guilty about consuming a 1000 calories lol", brand: "zomato", sent: "Positive" }
+    ];
+
+    function renderSZComments() {
+      const brandVal = document.getElementById('filterBrandSelect').value;
+      const sentVal = document.getElementById('filterSentSelect').value;
+      const container = document.getElementById('szCommentsList');
+
+      let filtered = sampleSZComments.filter(item => {
+        let matchBrand = (brandVal === 'both') ? (item.brand === 'both') : (brandVal === 'swiggy' ? (item.brand === 'swiggy' || item.brand === 'both') : (item.brand === 'zomato' || item.brand === 'both'));
+        let matchSent = (sentVal === 'all') || (item.sent === sentVal);
+        return matchBrand && matchSent;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<p class="text-gray-400 italic">No comments match the selected filter criteria.</p>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(c => {
+        const badgeColor = c.sent === 'Negative' ? 'bg-red-100 text-red-700' : (c.sent === 'Positive' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700');
+        return `
+          <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div class="flex justify-between items-center mb-1">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">${c.brand.toUpperCase()}</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${badgeColor}">${c.sent}</span>
+            </div>
+            <p class="text-gray-700 text-xs">${c.text}</p>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.onload = function() {
+      initFunnelChart();
+      testConnection();
+    };
+  </script>
+</body>
+</html>
